@@ -1,12 +1,12 @@
 from Acquisition import aq_inner, aq_parent, aq_base
 from Products.Five import BrowserView
-from Products.CMFDefault.NewsItem import NewsItem
 from DateTime import DateTime
 import logging
 import StringIO, re, rfc822, mimetools, email, multifile
 from Products.Archetypes.event import ObjectInitializedEvent
 import zope.event
 from Testing import makerequest
+from plone.app.textfield.value import RichTextValue
 from plone.i18n.normalizer.interfaces import IUserPreferredURLNormalizer
 
 log = logging.getLogger('slc.mail2news')
@@ -86,7 +86,7 @@ class MailHandler(BrowserView):
         uni_aktuell_body = "<p><strong>%s: %s</strong></p> <p>&nbsp;</p><pre>%s</pre>" % (mydate, sender, body)
 #        uni_aktuell_body = '<p>&nbsp;</p>' + body
 
-        objid = self.context.invokeFactory(NewsItem.meta_type, id=id, title=title, text=uni_aktuell_body, description=desc)
+        objid = self.context.invokeFactory('News Item', id=id, title=title, text=RichTextValue(uni_aktuell_body), description=desc)
 
         mailObject = getattr(self.context, objid)
         try:
