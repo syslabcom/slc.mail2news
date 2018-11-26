@@ -31,7 +31,7 @@ def test_suite():
 
         # Unit tests
         #doctestunit.DocFileSuite(
-        #    'README.txt', package='slc.mail2news',
+        #    'README.md', package='slc.mail2news',
         #    setUp=testing.setUp, tearDown=testing.tearDown),
 
         #doctestunit.DocTestSuite(
@@ -41,7 +41,7 @@ def test_suite():
 
         # Integration tests that use PloneTestCase
         #ztc.ZopeDocFileSuite(
-        #    'README.txt', package='slc.mail2news',
+        #    'README.md', package='slc.mail2news',
         #    test_class=TestCase),
 
         #ztc.FunctionalDocFileSuite(
