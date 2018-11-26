@@ -10,4 +10,5 @@ class MailHandlerScript(ConsoleScript):
         mailhandler_view = MailHandler(self.context, self.context.REQUEST)
         mailhandler_view()
 
+
 mail_handler = MailHandlerScript()

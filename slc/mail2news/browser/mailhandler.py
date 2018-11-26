@@ -1,15 +1,15 @@
-from Acquisition import aq_inner, aq_parent, aq_base
-from Products.Five import BrowserView
+from Acquisition import aq_inner, aq_parent
 from DateTime import DateTime
-import logging
-import StringIO, re, rfc822, mimetools, email, multifile
 from Products.Archetypes.event import ObjectInitializedEvent
 from Products.CMFPlone.utils import safe_unicode
-import zope.event
-from Testing import makerequest
+from Products.Five import BrowserView
+from datetime import date
 from plone.app.textfield.value import RichTextValue
 from plone.i18n.normalizer.interfaces import IUserPreferredURLNormalizer
 from plone.namedfile import NamedBlobImage
+import StringIO, re, rfc822, mimetools, email, multifile
+import logging
+import zope.event
 
 log = logging.getLogger('slc.mail2news')
 
@@ -44,12 +44,12 @@ class MailHandler(BrowserView):
             Returns created item
         """
 
-        archive = self.context
         pw = self.context.portal_workflow
-        
+
         (header, body) = splitMail(mailString)
 
         # if 'keepdate' is set, get date from mail,
+        # XXX 'time' is unused
         if self.getValueFor('keepdate'):
             timetuple = rfc822.parsedate_tz(header.get('date'))
             time = DateTime(rfc822.mktime_tz(timetuple))
@@ -60,20 +60,14 @@ class MailHandler(BrowserView):
         (TextBody, ContentType, HtmlBody, Attachments) = unpackMail(mailString)
 
         # Test Zeitangabe hinter Subject
-        from datetime import date
         today = date.today()
         mydate = today.strftime("%d.%m.%Y")
-
-
-
-
 
         # let's create the news item
 
         subject = mime_decode_header(header.get('subject', 'No Subject'))
-        sender = mime_decode_header(header.get('from','No From'))
-        #title = "%s / %s" % (subject, sender)
-        title = "%s"  % (subject)
+        sender = mime_decode_header(header.get('from', 'No From'))
+        title = "%s" % (subject)
 
         new_id = IUserPreferredURLNormalizer(self.request).normalize(title)
         id = self._findUniqueId(new_id)
@@ -83,12 +77,19 @@ class MailHandler(BrowserView):
         else:
             body = self.HtmlToText(HtmlBody)
 
-# als vorlaeufige Loesung
+        # XXX als vorlaeufige Loesung
         desc = "%s..." % (body[:60])
-        uni_aktuell_body = "<p><strong>%s: %s</strong></p> <p>&nbsp;</p><pre>%s</pre>" % (mydate, sender, body)
-#        uni_aktuell_body = '<p>&nbsp;</p>' + body
+        uni_aktuell_body = ("<p><strong>%s: %s</strong></p> "
+                            "<p>&nbsp;</p><pre>%s</pre>" % (
+                                mydate, sender, body))
 
-        objid = self.context.invokeFactory('News Item', id=id, title=title, text=RichTextValue(uni_aktuell_body), description=desc)
+        objid = self.context.invokeFactory(
+            'News Item',
+            id=id,
+            title=title,
+            text=RichTextValue(uni_aktuell_body),
+            description=desc,
+        )
 
         mailObject = getattr(self.context, objid)
         images = [att for att in Attachments
@@ -100,10 +101,9 @@ class MailHandler(BrowserView):
                 data=image['filebody'],
             )
         try:
-#original            pw.doActionFor(mailObject, 'hide')
             pw.doActionFor(mailObject, 'publish')
-        except:
-            pass
+        except Exception as e:
+            log.exception(e)
         return mailObject
 
     def _findUniqueId(self, id):
@@ -115,7 +115,9 @@ class MailHandler(BrowserView):
         from Products.Archetypes.config import RENAME_AFTER_CREATION_ATTEMPTS
         parent = aq_parent(aq_inner(self))
         parent_ids = parent.objectIds()
-        check_id = lambda id, required: id in parent_ids
+
+        def check_id(id, required):
+            return id in parent_ids
 
         invalid_id = check_id(id, required=1)
         if not invalid_id:
@@ -130,43 +132,44 @@ class MailHandler(BrowserView):
 
         return None
 
-
     def getMailFromRequest(self, REQUEST):
         # returns the Mail from the REQUEST-object as string
 
         return str(REQUEST[MAIL_PARAMETER_NAME])
-
 
     def getValueFor(self, key):
         return conf_dict[key]
 
 
 def splitMail(mailString):
-    """ returns (header,body) of a mail given as string 
+    """ returns (header,body) of a mail given as string
     """
     msg = mimetools.Message(StringIO.StringIO(str(mailString)))
 
     # Get headers
     mailHeader = {}
-    for (key,value) in msg.items():
+    for (key, value) in msg.items():
         mailHeader[key] = value
-        
+
     # Get body
     msg.rewindbody()
     mailBody = msg.fp.read()
 
     return (mailHeader, mailBody)
 
+
 def unpackMail(mailString):
     """ returns body, content-type, html-body and attachments for mail-string.
-    """    
+    """
     return unpackMultifile(multifile.MultiFile(StringIO.StringIO(mailString)))
 
+
 def unpackMultifile(multifile, attachments=None):
-    """ Unpack multifile into plainbody, content-type, htmlbody and attachments.
+    """ Unpack multifile into plainbody, content-type, htmlbody and
+    attachments.
     """
     if attachments is None:
-        attachments=[]
+        attachments = []
     textBody = htmlBody = contentType = ''
 
     msg = mimetools.Message(multifile)
@@ -179,8 +182,8 @@ def unpackMultifile(multifile, attachments=None):
         # Check for disposition header (RFC:1806)
         disposition = msg.getheader('Content-Disposition')
         if disposition:
-            matchObj = re.search('(?i)filename="*(?P<filename>[^\s"]*)"*',
-                                   disposition)
+            matchObj = re.search(r'(?i)filename="*(?P<filename>[^\s"]*)"*',
+                                 disposition)
             if matchObj:
                 name = matchObj.group('filename')
 
@@ -192,7 +195,7 @@ def unpackMultifile(multifile, attachments=None):
             multifile.next()
 
             (tmpTextBody, tmpContentType, tmpHtmlBody, tmpAttachments) = \
-                                       unpackMultifile(multifile, attachments)
+                unpackMultifile(multifile, attachments)
 
             # Return ContentType only for the plain-body of a mail
             if tmpContentType and not textBody:
@@ -201,7 +204,7 @@ def unpackMultifile(multifile, attachments=None):
 
             if tmpHtmlBody:
                 htmlBody = tmpHtmlBody
-        
+
             if tmpAttachments:
                 attachments = tmpAttachments
 
@@ -212,10 +215,10 @@ def unpackMultifile(multifile, attachments=None):
     plainfile = StringIO.StringIO()
 
     try:
-        mimetools.decode(multifile,plainfile,msg.getencoding())
+        mimetools.decode(multifile, plainfile, msg.getencoding())
     # unknown or no encoding? 7bit, 8bit or whatever... copy literal
     except ValueError:
-        mimetools.copyliteral(multifile,plainfile)
+        mimetools.copyliteral(multifile, plainfile)
 
     body = plainfile.getvalue()
     plainfile.close()
@@ -227,28 +230,29 @@ def unpackMultifile(multifile, attachments=None):
     else:
         # No name? This should be the html-body...
         if not name:
-            name = '%s.%s' % (maintype,subtype)
+            name = '%s.%s' % (maintype, subtype)
             htmlBody = body
-        
-        attachments.append({'filename' : mime_decode_header(name), 
-                            'filebody' : body,
-                            'maintype' : maintype,
-                            'subtype' : subtype})
-            
+
+        attachments.append({'filename': mime_decode_header(name),
+                            'filebody': body,
+                            'maintype': maintype,
+                            'subtype': subtype})
+
     return (textBody, contentType, htmlBody, attachments)
+
 
 def mime_decode_header(header):
     """ Returns the unfolded and undecoded header
     """
     # unfold the header
-    header = re.sub(r'\r?\n\s+',' ', header)
-    
+    header = re.sub(r'\r?\n\s+', ' ', header)
+
     # different naming between python 2.4 and 2.6?
     if hasattr(email, 'header'):
         header = email.header.decode_header(header)
     else:
         header = email.Header.decode_header(header)
-        
+
     headerout = []
     for line in header:
         if line[1]:
@@ -257,4 +261,3 @@ def mime_decode_header(header):
             line = line[0]
         headerout.append(line)
     return '\n'.join(headerout)
-
