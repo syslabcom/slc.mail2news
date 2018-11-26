@@ -4,10 +4,12 @@ from DateTime import DateTime
 import logging
 import StringIO, re, rfc822, mimetools, email, multifile
 from Products.Archetypes.event import ObjectInitializedEvent
+from Products.CMFPlone.utils import safe_unicode
 import zope.event
 from Testing import makerequest
 from plone.app.textfield.value import RichTextValue
 from plone.i18n.normalizer.interfaces import IUserPreferredURLNormalizer
+from plone.namedfile import NamedBlobImage
 
 log = logging.getLogger('slc.mail2news')
 
@@ -89,6 +91,14 @@ class MailHandler(BrowserView):
         objid = self.context.invokeFactory('News Item', id=id, title=title, text=RichTextValue(uni_aktuell_body), description=desc)
 
         mailObject = getattr(self.context, objid)
+        images = [att for att in Attachments
+                  if att['maintype'] == 'image' and att['filename']]
+        if images and hasattr(mailObject, 'image'):
+            image = Attachments[0]
+            mailObject.image = NamedBlobImage(
+                filename=safe_unicode(image['filename']),
+                data=image['filebody'],
+            )
         try:
 #original            pw.doActionFor(mailObject, 'hide')
             pw.doActionFor(mailObject, 'publish')
