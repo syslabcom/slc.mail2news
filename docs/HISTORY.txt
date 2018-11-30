@@ -5,6 +5,7 @@ Changelog
 ------------------
 
 - Add first attached image as lead image [reinhardt]
+- Wrap mail body lines after 50 characters [reinhardt]
 
 
 1.0.4 (2016-03-18)

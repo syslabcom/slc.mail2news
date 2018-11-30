@@ -22,6 +22,14 @@ FALSE = "FALSE"
 # mail-parameter in the smtp2http-request
 MAIL_PARAMETER_NAME = "Mail"
 
+
+def wrap_line(line):
+    idx = line.rfind(' ', 0, 50)
+    if idx < 0:
+        return line
+    return line[:idx] + '\n' + wrap_line(line[idx+1:])
+
+
 class MailHandler(BrowserView):
 
     def __call__(self):
@@ -79,6 +87,7 @@ class MailHandler(BrowserView):
 
         # XXX als vorlaeufige Loesung
         desc = "%s..." % (body[:60])
+        body = '\n'.join([wrap_line(line) for line in body.splitlines()])
         uni_aktuell_body = ("<p><strong>%s: %s</strong></p> "
                             "<p>&nbsp;</p><pre>%s</pre>" % (
                                 mydate, sender, body))
