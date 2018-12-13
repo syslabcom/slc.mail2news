@@ -4,6 +4,7 @@ Changelog
 1.0.5 (unreleased)
 ------------------
 
+- Fix text cropping (Refs. #UNIBW-907)  [ale-rt]
 - Add first attached image as lead image [reinhardt]
 - Wrap mail body lines after 50 characters [reinhardt]
 

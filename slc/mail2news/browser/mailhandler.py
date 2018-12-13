@@ -86,7 +86,9 @@ class MailHandler(BrowserView):
             body = self.HtmlToText(HtmlBody)
 
         # XXX als vorlaeufige Loesung
-        desc = "%s..." % (body[:60])
+        from zope.component import getMultiAdapter
+        plone_view = getMultiAdapter((self.context, self.request), name='plone')
+        desc = plone_view.cropText(body, 60)
         body = '\n'.join([wrap_line(line) for line in body.splitlines()])
         uni_aktuell_body = ("<p><strong>%s: %s</strong></p> "
                             "<p>&nbsp;</p><pre>%s</pre>" % (
