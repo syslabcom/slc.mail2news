@@ -59,8 +59,8 @@ class MailHandler(BrowserView):
         (header, body) = splitMail(mailString)
 
         # FLOW-555
-        ignore = mime_decode_header(header.get('x-mailin-ignore'))
-        if ignore:
+        ignore = mime_decode_header(header.get('x-mailin-ignore', 'false'))
+        if ignore == 'true':
             log.info('X-mailin-ignore header detected, ignoring email')
             return
 
