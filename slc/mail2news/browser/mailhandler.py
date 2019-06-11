@@ -40,12 +40,14 @@ class MailHandler(BrowserView):
         #    return FALSE
 
         obj = self.addMail(self.getMailFromRequest(self.request))
-        event = ObjectInitializedEvent(obj, self.request)
-        zope.event.notify(event)
+        if obj:
+            event = ObjectInitializedEvent(obj, self.request)
+            zope.event.notify(event)
 
-        msg = 'Created news item %s' % ('/'.join([self.context.absolute_url(), obj.getId()]))
-        log.info(msg)
-        return msg
+            msg = 'Created news item %s' % ('/'.join(
+                [self.context.absolute_url(), obj.getId()]))
+            log.info(msg)
+            return msg
 
     def addMail(self, mailString):
         """ Store mail as news item
@@ -55,6 +57,12 @@ class MailHandler(BrowserView):
         pw = self.context.portal_workflow
 
         (header, body) = splitMail(mailString)
+
+        # FLOW-555
+        ignore = mime_decode_header(header.get('x-mailin-ignore'))
+        if ignore:
+            log.info('X-mailin-ignore header detected, ignoring email')
+            return
 
         # if 'keepdate' is set, get date from mail,
         # XXX 'time' is unused
