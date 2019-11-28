@@ -1,6 +1,5 @@
 from Acquisition import aq_inner, aq_parent
 from DateTime import DateTime
-from Products.Archetypes.event import ObjectInitializedEvent
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from datetime import date
@@ -41,6 +40,7 @@ class MailHandler(BrowserView):
 
         obj = self.addMail(self.getMailFromRequest(self.request))
         if obj:
+            from Products.Archetypes.event import ObjectInitializedEvent
             event = ObjectInitializedEvent(obj, self.request)
             zope.event.notify(event)
 
