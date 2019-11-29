@@ -10,6 +10,19 @@ import StringIO, re, rfc822, mimetools, email, multifile
 import logging
 import zope.event
 
+try:
+    from Products.Archetypes.config import RENAME_AFTER_CREATION_ATTEMPTS
+    from Products.Archetypes.event import ObjectInitializedEvent
+    HAVE_ARCHETYPES = True
+except ImportError:
+    RENAME_AFTER_CREATION_ATTEMPTS = 100
+    HAVE_ARCHETYPES = False
+try:
+    import plone.app.contenttypes
+    HAVE_PAC = True
+except ImportError:
+    HAVE_PAC = False
+
 log = logging.getLogger('slc.mail2news')
 
 conf_dict = { 'keepdate': 0 }
@@ -40,9 +53,9 @@ class MailHandler(BrowserView):
 
         obj = self.addMail(self.getMailFromRequest(self.request))
         if obj:
-            from Products.Archetypes.event import ObjectInitializedEvent
-            event = ObjectInitializedEvent(obj, self.request)
-            zope.event.notify(event)
+            if HAVE_ARCHETYPES:
+                event = ObjectInitializedEvent(obj, self.request)
+                zope.event.notify(event)
 
             msg = 'Created news item %s' % ('/'.join(
                 [self.context.absolute_url(), obj.getId()]))
@@ -101,24 +114,28 @@ class MailHandler(BrowserView):
         uni_aktuell_body = ("<p><strong>%s: %s</strong></p> "
                             "<p>&nbsp;</p><pre>%s</pre>" % (
                                 mydate, sender, body))
+        if HAVE_PAC:
+            uni_aktuell_body = RichTextValue(uni_aktuell_body)
 
         objid = self.context.invokeFactory(
             'News Item',
             id=id,
             title=title,
-            text=RichTextValue(uni_aktuell_body),
+            text=uni_aktuell_body,
             description=desc,
         )
 
         mailObject = getattr(self.context, objid)
         images = [att for att in Attachments
                   if att['maintype'] == 'image' and att['filename']]
+        image = Attachments[0]
         if images and hasattr(mailObject, 'image'):
-            image = Attachments[0]
             mailObject.image = NamedBlobImage(
                 filename=safe_unicode(image['filename']),
                 data=image['filebody'],
             )
+        elif images and hasattr(mailObject, "setImage"):
+            mailObject.setImage(image["filebody"], filename=image["filename"])
         try:
             pw.doActionFor(mailObject, 'publish')
         except Exception as e:
@@ -131,7 +148,6 @@ class MailHandler(BrowserView):
         RENAME_AFTER_CREATION_ATTEMPTS, set in config.py. If no id can be
         found, return None.
         """
-        from Products.Archetypes.config import RENAME_AFTER_CREATION_ATTEMPTS
         parent = aq_parent(aq_inner(self))
         parent_ids = parent.objectIds()
 

@@ -12,6 +12,9 @@ setup(name='slc.mail2news',
       classifiers=[
         "Framework :: Plone",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2.7",
+        "Framework :: Plone :: 4.3",
+        "Framework :: Plone :: 5.2",
         ],
       keywords='mail news rpc',
       author='Syslab.com',
@@ -27,6 +30,12 @@ setup(name='slc.mail2news',
           # -*- Extra requirements: -*-
           'slc.zopescript',
       ],
+      extras_require={
+          'test': [
+              'plone.app.testing',
+              'plone.api',
+          ],
+      },
       entry_points="""
       # -*- Entry points: -*-
 
