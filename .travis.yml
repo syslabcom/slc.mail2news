@@ -8,7 +8,7 @@ matrix:
 install:
   - mkdir -p buildout-cache/downloads
   - cp requirements-$PLONE_VERSION.txt requirements.txt
-  - pip install -r requirements.txt --force-reinstall --install-option="--install-scripts=${PWD}/bin
+  - pip install -r requirements.txt --force-reinstall --install-option="--install-scripts=${PWD}/bin"
   - bin/buildout -c test-$PLONE_VERSION.cfg
 script:
   - bin/test
