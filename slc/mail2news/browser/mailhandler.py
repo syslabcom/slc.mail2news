@@ -6,7 +6,7 @@ from datetime import date
 from plone.app.textfield.value import RichTextValue
 from plone.i18n.normalizer.interfaces import IUserPreferredURLNormalizer
 from plone.namedfile import NamedBlobImage
-import StringIO, re, rfc822, mimetools, email, multifile
+import StringIO, re, rfc822, mimetools, email
 import logging
 import zope.event
 
@@ -197,18 +197,18 @@ def splitMail(mailString):
 def unpackMail(mailString):
     """ returns body, content-type, html-body and attachments for mail-string.
     """
-    return unpackMultifile(multifile.MultiFile(StringIO.StringIO(mailString)))
+    return unpackMultifile(safe_unicode(mailString))
 
 
-def unpackMultifile(multifile, attachments=None):
-    """ Unpack multifile into plainbody, content-type, htmlbody and
+def unpackMultifile(mailstring, attachments=None):
+    """ Unpack mailstring into plainbody, content-type, htmlbody and
     attachments.
     """
     if attachments is None:
         attachments = []
     textBody = htmlBody = contentType = ''
 
-    msg = mimetools.Message(multifile)
+    msg = email.message_from_string(mailstring)
     maintype = msg.getmaintype()
     subtype = msg.getsubtype()
 
@@ -225,13 +225,9 @@ def unpackMultifile(multifile, attachments=None):
 
     # Recurse over all nested multiparts
     if maintype == 'multipart':
-        multifile.push(msg.getparam('boundary'))
-        multifile.readlines()
-        while not multifile.last:
-            multifile.next()
-
+        for part in msg.walk():
             (tmpTextBody, tmpContentType, tmpHtmlBody, tmpAttachments) = \
-                unpackMultifile(multifile, attachments)
+                unpackMultifile(part, attachments)
 
             # Return ContentType only for the plain-body of a mail
             if tmpContentType and not textBody:
@@ -244,25 +240,14 @@ def unpackMultifile(multifile, attachments=None):
             if tmpAttachments:
                 attachments = tmpAttachments
 
-        multifile.pop()
         return (textBody, contentType, htmlBody, attachments)
 
-    # Process MIME-encoded data
-    plainfile = StringIO.StringIO()
-
-    try:
-        mimetools.decode(multifile, plainfile, msg.getencoding())
-    # unknown or no encoding? 7bit, 8bit or whatever... copy literal
-    except ValueError:
-        mimetools.copyliteral(multifile, plainfile)
-
-    body = plainfile.getvalue()
-    plainfile.close()
+    body = msg.get_body()
 
     # Get plain text
     if maintype == 'text' and subtype == 'plain' and not name:
         textBody = body
-        contentType = msg.get('content-type', 'text/plain')
+        contentType = msg.get_content_type()
     else:
         # No name? This should be the html-body...
         if not name:

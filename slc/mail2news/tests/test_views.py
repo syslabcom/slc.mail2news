@@ -127,5 +127,5 @@ class TestMailHandlerUnit(unittest.TestCase):
         self.assertEquals(headers["from"], "news@syslab.com")
         self.assertEquals(
             headers["content-type"],
-            'multipart/mixed;\nboundary="------------050300010503020604080804"',
+            'multipart/mixed;\n boundary="------------050300010503020604080804"',
         )
