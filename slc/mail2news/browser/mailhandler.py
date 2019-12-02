@@ -128,14 +128,15 @@ class MailHandler(BrowserView):
         mailObject = getattr(self.context, objid)
         images = [att for att in Attachments
                   if att['maintype'] == 'image' and att['filename']]
-        image = Attachments[0]
-        if images and hasattr(mailObject, 'image'):
-            mailObject.image = NamedBlobImage(
-                filename=safe_unicode(image['filename']),
-                data=image['filebody'],
-            )
-        elif images and hasattr(mailObject, "setImage"):
-            mailObject.setImage(image["filebody"], filename=image["filename"])
+        if images:
+            image = images[0]
+            if hasattr(mailObject, 'image'):
+                mailObject.image = NamedBlobImage(
+                    filename=safe_unicode(image['filename']),
+                    data=image['filebody'],
+                )
+            elif hasattr(mailObject, "setImage"):
+                mailObject.setImage(image["filebody"], filename=image["filename"])
         try:
             pw.doActionFor(mailObject, 'publish')
         except Exception as e:
