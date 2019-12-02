@@ -25,13 +25,4 @@ http://www.syslab.com
 
 
 
-
---------------050709000607090809080406
-Content-Type: image/gif;
- name="pixel.gif"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="pixel.gif"
-
-R0lGODdhAQABAIABAAAAAP///ywAAAAAAQABAAACAkQBADs=
 --------------050709000607090809080406--
