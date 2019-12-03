@@ -6,7 +6,7 @@ from slc.zopescript.script import ConsoleScript
 class MailHandlerScript(ConsoleScript):
     def run(self):
         mailString = sys.stdin.read()
-        self.portal.REQUEST['Mail'] = mailString
+        self.portal.REQUEST["Mail"] = mailString
         mailhandler_view = MailHandler(self.context, self.context.REQUEST)
         mailhandler_view()
 

@@ -38,19 +38,20 @@ class SlcMail2news(PloneSandboxLayer):
         except ImportError:
             self.plone4 = True
         if not self.plone4:
-            self.loadZCML('configure.zcml', package=plone.app.contenttypes)
+            self.loadZCML("configure.zcml", package=plone.app.contenttypes)
         import slc.mail2news
-        self.loadZCML('configure.zcml', package=slc.mail2news)
+
+        self.loadZCML("configure.zcml", package=slc.mail2news)
 
     def setUpPloneSite(self, portal):
         if not self.plone4:
-            applyProfile(portal, 'plone.app.contenttypes:default')
+            applyProfile(portal, "plone.app.contenttypes:default")
 
 
 SLC_MAIL2NEWS_FIXTURE = SlcMail2news()
 INTEGRATION_TESTING = IntegrationTesting(
-    bases=(SLC_MAIL2NEWS_FIXTURE,),
-    name="SlcMail2news:Integration")
+    bases=(SLC_MAIL2NEWS_FIXTURE,), name="SlcMail2news:Integration"
+)
 FUNCTIONAL_TESTING = FunctionalTesting(
-    bases=(SLC_MAIL2NEWS_FIXTURE,),
-    name="SlcMail2news:Functional")
+    bases=(SLC_MAIL2NEWS_FIXTURE,), name="SlcMail2news:Functional"
+)

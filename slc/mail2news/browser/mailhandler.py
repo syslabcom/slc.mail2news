@@ -14,18 +14,20 @@ import zope.event
 try:
     from Products.Archetypes.config import RENAME_AFTER_CREATION_ATTEMPTS
     from Products.Archetypes.event import ObjectInitializedEvent
+
     HAVE_ARCHETYPES = True
 except ImportError:
     RENAME_AFTER_CREATION_ATTEMPTS = 100
     HAVE_ARCHETYPES = False
 try:
     import plone.app.contenttypes
+
     plone.app.contenttypes
     HAVE_PAC = True
 except ImportError:
     HAVE_PAC = False
 
-log = logging.getLogger('slc.mail2news')
+log = logging.getLogger("slc.mail2news")
 
 # Simple return-Codes for web-callable-methods for the smtp2zope-gate
 TRUE = "TRUE"
@@ -36,19 +38,18 @@ MAIL_PARAMETER_NAME = "Mail"
 
 
 def wrap_line(line):
-    idx = line.rfind(' ', 0, 50)
+    idx = line.rfind(" ", 0, 50)
     if idx < 0:
         return line
-    return line[:idx] + '\n' + wrap_line(line[idx+1:])
+    return line[:idx] + "\n" + wrap_line(line[idx + 1 :])
 
 
 class MailHandler(BrowserView):
-
     def __call__(self):
         """ Handles mail received in request
         """
-        #TODO: add this, seems to make sense
-        #if self.checkMail(self.request):
+        # TODO: add this, seems to make sense
+        # if self.checkMail(self.request):
         #    return FALSE
 
         obj = self.addMail(self.getMailFromRequest(self.request))
@@ -57,8 +58,9 @@ class MailHandler(BrowserView):
                 event = ObjectInitializedEvent(obj, self.request)
                 zope.event.notify(event)
 
-            msg = 'Created news item %s' % ('/'.join(
-                [self.context.absolute_url(), obj.getId()]))
+            msg = "Created news item %s" % (
+                "/".join([self.context.absolute_url(), obj.getId()])
+            )
             log.info(msg)
             return msg
 
@@ -72,9 +74,9 @@ class MailHandler(BrowserView):
         msg = email.message_from_string(msg)
 
         # FLOW-555
-        ignore = msg.get('x-mailin-ignore', 'false')
-        if ignore == 'true':
-            log.info('X-mailin-ignore header detected, ignoring email')
+        ignore = msg.get("x-mailin-ignore", "false")
+        if ignore == "true":
+            log.info("X-mailin-ignore header detected, ignoring email")
             return
 
         (TextBody, ContentType, HtmlBody, Attachments) = unpackMail(msg)
@@ -85,8 +87,8 @@ class MailHandler(BrowserView):
 
         # let's create the news item
 
-        subject = msg.get('subject', 'No Subject')
-        sender = msg.get('from', 'No From')
+        subject = msg.get("subject", "No Subject")
+        sender = msg.get("from", "No From")
         title = "%s" % (subject)
 
         new_id = IUserPreferredURLNormalizer(self.request).normalize(title)
@@ -98,37 +100,36 @@ class MailHandler(BrowserView):
             body = self.HtmlToText(HtmlBody)
 
         # XXX als vorlaeufige Loesung
-        plone_view = api.content.get_view(context=self.context, request=self.request, name='plone')
+        plone_view = api.content.get_view(
+            context=self.context, request=self.request, name="plone"
+        )
         desc = plone_view.cropText(body, 60)
-        body = '\n'.join([wrap_line(line) for line in body.splitlines()])
-        uni_aktuell_body = ("<p><strong>%s: %s</strong></p> "
-                            "<p>&nbsp;</p><pre>%s</pre>" % (
-                                mydate, sender, body))
+        body = "\n".join([wrap_line(line) for line in body.splitlines()])
+        uni_aktuell_body = (
+            "<p><strong>%s: %s</strong></p> "
+            "<p>&nbsp;</p><pre>%s</pre>" % (mydate, sender, body)
+        )
         if HAVE_PAC:
             uni_aktuell_body = RichTextValue(uni_aktuell_body)
 
         objid = self.context.invokeFactory(
-            'News Item',
-            id=id,
-            title=title,
-            text=uni_aktuell_body,
-            description=desc,
+            "News Item", id=id, title=title, text=uni_aktuell_body, description=desc,
         )
 
         mailObject = getattr(self.context, objid)
-        images = [att for att in Attachments
-                  if att['maintype'] == 'image' and att['filename']]
+        images = [
+            att for att in Attachments if att["maintype"] == "image" and att["filename"]
+        ]
         if images:
             image = images[0]
-            if hasattr(mailObject, 'image'):
+            if hasattr(mailObject, "image"):
                 mailObject.image = NamedBlobImage(
-                    filename=safe_unicode(image['filename']),
-                    data=image['filebody'],
+                    filename=safe_unicode(image["filename"]), data=image["filebody"],
                 )
             elif hasattr(mailObject, "setImage"):
                 mailObject.setImage(image["filebody"], filename=image["filename"])
         try:
-            pw.doActionFor(mailObject, 'publish')
+            pw.doActionFor(mailObject, "publish")
         except Exception as e:
             log.exception(e)
         return mailObject
@@ -168,18 +169,17 @@ def unpackMail(msg):
     """ returns body, content-type, html-body and attachments for mail.
     """
     attachments = []
-    textBody = htmlBody = contentType = ''
+    textBody = htmlBody = contentType = ""
 
     name = msg.get_filename
 
     if not name:
         # Check for disposition header (RFC:1806)
-        disposition = msg.getheader('Content-Disposition')
+        disposition = msg.getheader("Content-Disposition")
         if disposition:
-            matchObj = re.search(r'(?i)filename="*(?P<filename>[^\s"]*)"*',
-                                 disposition)
+            matchObj = re.search(r'(?i)filename="*(?P<filename>[^\s"]*)"*', disposition)
             if matchObj:
-                name = matchObj.group('filename')
+                name = matchObj.group("filename")
 
     # Iterate over all nested multiparts
     for part in msg.walk():
@@ -199,12 +199,16 @@ def unpackMail(msg):
             subtype = part.get_content_subtype()
             # No name? This should be the html-body...
             if not name:
-                name = '%s.%s' % (maintype, subtype)
+                name = "%s.%s" % (maintype, subtype)
                 htmlBody = safe_unicode(payload)
 
-            attachments.append({'filename': name,
-                                'filebody': payload,
-                                'maintype': maintype,
-                                'subtype': subtype})
+            attachments.append(
+                {
+                    "filename": name,
+                    "filebody": payload,
+                    "maintype": maintype,
+                    "subtype": subtype,
+                }
+            )
 
     return (textBody, contentType, htmlBody, attachments)
