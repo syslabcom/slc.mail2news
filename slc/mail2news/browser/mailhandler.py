@@ -1,15 +1,16 @@
-from Acquisition import aq_inner, aq_parent
-from Products.CMFPlone.utils import safe_unicode
-from Products.Five import BrowserView
+import email
+import logging
+import re
 from datetime import date
+
+import zope.event
+from Acquisition import aq_inner, aq_parent
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.i18n.normalizer.interfaces import IUserPreferredURLNormalizer
 from plone.namedfile import NamedBlobImage
-import re
-import email
-import logging
-import zope.event
+from Products.CMFPlone.utils import safe_unicode
+from Products.Five import BrowserView
 
 try:
     from Products.Archetypes.config import RENAME_AFTER_CREATION_ATTEMPTS

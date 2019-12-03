@@ -1,4 +1,5 @@
 import sys
+
 from slc.mail2news.browser.mailhandler import MailHandler
 from slc.zopescript.script import ConsoleScript
 

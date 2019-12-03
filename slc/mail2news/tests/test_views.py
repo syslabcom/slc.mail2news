@@ -1,10 +1,9 @@
 import unittest
+
 from plone import api
-from plone.app.testing import helpers, SITE_OWNER_NAME
+from plone.app.testing import SITE_OWNER_NAME, helpers
 from slc.mail2news.browser.mailhandler import unpackMail
-from slc.mail2news.testing import INTEGRATION_TESTING
-from slc.mail2news.testing import load_mail_msg
-from slc.mail2news.testing import load_mail_str
+from slc.mail2news.testing import INTEGRATION_TESTING, load_mail_msg, load_mail_str
 
 
 class TestMailHandler(unittest.TestCase):
