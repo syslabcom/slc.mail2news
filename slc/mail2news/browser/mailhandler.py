@@ -1,12 +1,13 @@
 from Acquisition import aq_inner, aq_parent
-from DateTime import DateTime
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from datetime import date
+from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.i18n.normalizer.interfaces import IUserPreferredURLNormalizer
 from plone.namedfile import NamedBlobImage
-import StringIO, re, rfc822, mimetools, email
+import re
+import email
 import logging
 import zope.event
 
@@ -19,13 +20,12 @@ except ImportError:
     HAVE_ARCHETYPES = False
 try:
     import plone.app.contenttypes
+    plone.app.contenttypes
     HAVE_PAC = True
 except ImportError:
     HAVE_PAC = False
 
 log = logging.getLogger('slc.mail2news')
-
-conf_dict = { 'keepdate': 0 }
 
 # Simple return-Codes for web-callable-methods for the smtp2zope-gate
 TRUE = "TRUE"
@@ -62,31 +62,22 @@ class MailHandler(BrowserView):
             log.info(msg)
             return msg
 
-    def addMail(self, mailString):
+    def addMail(self, mailstring):
         """ Store mail as news item
             Returns created item
         """
-
         pw = self.context.portal_workflow
 
-        (header, body) = splitMail(mailString)
+        msg = safe_unicode(mailstring)
+        msg = email.message_from_string(msg)
 
         # FLOW-555
-        ignore = mime_decode_header(header.get('x-mailin-ignore', 'false'))
+        ignore = msg.get('x-mailin-ignore', 'false')
         if ignore == 'true':
             log.info('X-mailin-ignore header detected, ignoring email')
             return
 
-        # if 'keepdate' is set, get date from mail,
-        # XXX 'time' is unused
-        if self.getValueFor('keepdate'):
-            timetuple = rfc822.parsedate_tz(header.get('date'))
-            time = DateTime(rfc822.mktime_tz(timetuple))
-        # ... take our own date, clients are always lying!
-        else:
-            time = DateTime()
-
-        (TextBody, ContentType, HtmlBody, Attachments) = unpackMail(mailString)
+        (TextBody, ContentType, HtmlBody, Attachments) = unpackMail(msg)
 
         # Test Zeitangabe hinter Subject
         today = date.today()
@@ -94,8 +85,8 @@ class MailHandler(BrowserView):
 
         # let's create the news item
 
-        subject = mime_decode_header(header.get('subject', 'No Subject'))
-        sender = mime_decode_header(header.get('from', 'No From'))
+        subject = msg.get('subject', 'No Subject')
+        sender = msg.get('from', 'No From')
         title = "%s" % (subject)
 
         new_id = IUserPreferredURLNormalizer(self.request).normalize(title)
@@ -107,8 +98,7 @@ class MailHandler(BrowserView):
             body = self.HtmlToText(HtmlBody)
 
         # XXX als vorlaeufige Loesung
-        from zope.component import getMultiAdapter
-        plone_view = getMultiAdapter((self.context, self.request), name='plone')
+        plone_view = api.content.get_view(context=self.context, request=self.request, name='plone')
         desc = plone_view.cropText(body, 60)
         body = '\n'.join([wrap_line(line) for line in body.splitlines()])
         uni_aktuell_body = ("<p><strong>%s: %s</strong></p> "
@@ -173,46 +163,14 @@ class MailHandler(BrowserView):
 
         return str(REQUEST[MAIL_PARAMETER_NAME])
 
-    def getValueFor(self, key):
-        return conf_dict[key]
 
-
-def splitMail(mailString):
-    """ returns (header,body) of a mail given as string
+def unpackMail(msg):
+    """ returns body, content-type, html-body and attachments for mail.
     """
-    msg = mimetools.Message(StringIO.StringIO(str(mailString)))
-
-    # Get headers
-    mailHeader = {}
-    for (key, value) in msg.items():
-        mailHeader[key] = value
-
-    # Get body
-    msg.rewindbody()
-    mailBody = msg.fp.read()
-
-    return (mailHeader, mailBody)
-
-
-def unpackMail(mailString):
-    """ returns body, content-type, html-body and attachments for mail-string.
-    """
-    return unpackMultifile(safe_unicode(mailString))
-
-
-def unpackMultifile(mailstring, attachments=None):
-    """ Unpack mailstring into plainbody, content-type, htmlbody and
-    attachments.
-    """
-    if attachments is None:
-        attachments = []
+    attachments = []
     textBody = htmlBody = contentType = ''
 
-    msg = email.message_from_string(mailstring)
-    maintype = msg.getmaintype()
-    subtype = msg.getsubtype()
-
-    name = msg.getparam('name')
+    name = msg.get_filename
 
     if not name:
         # Check for disposition header (RFC:1806)
@@ -223,62 +181,30 @@ def unpackMultifile(mailstring, attachments=None):
             if matchObj:
                 name = matchObj.group('filename')
 
-    # Recurse over all nested multiparts
-    if maintype == 'multipart':
-        for part in msg.walk():
-            (tmpTextBody, tmpContentType, tmpHtmlBody, tmpAttachments) = \
-                unpackMultifile(part, attachments)
+    # Iterate over all nested multiparts
+    for part in msg.walk():
+        if part.is_multipart():
+            continue
 
+        name = part.get_filename()
+        payload = part.get_payload(decode=1)
+
+        # Get plain text
+        if part.get_content_type() == "text/plain" and not name and not textBody:
+            textBody = safe_unicode(payload)
             # Return ContentType only for the plain-body of a mail
-            if tmpContentType and not textBody:
-                textBody = tmpTextBody
-                contentType = tmpContentType
+            contentType = part.get_content_type()
+        else:
+            maintype = part.get_content_maintype()
+            subtype = part.get_content_subtype()
+            # No name? This should be the html-body...
+            if not name:
+                name = '%s.%s' % (maintype, subtype)
+                htmlBody = safe_unicode(payload)
 
-            if tmpHtmlBody:
-                htmlBody = tmpHtmlBody
-
-            if tmpAttachments:
-                attachments = tmpAttachments
-
-        return (textBody, contentType, htmlBody, attachments)
-
-    body = msg.get_body()
-
-    # Get plain text
-    if maintype == 'text' and subtype == 'plain' and not name:
-        textBody = body
-        contentType = msg.get_content_type()
-    else:
-        # No name? This should be the html-body...
-        if not name:
-            name = '%s.%s' % (maintype, subtype)
-            htmlBody = body
-
-        attachments.append({'filename': mime_decode_header(name),
-                            'filebody': body,
-                            'maintype': maintype,
-                            'subtype': subtype})
+            attachments.append({'filename': name,
+                                'filebody': payload,
+                                'maintype': maintype,
+                                'subtype': subtype})
 
     return (textBody, contentType, htmlBody, attachments)
-
-
-def mime_decode_header(header):
-    """ Returns the unfolded and undecoded header
-    """
-    # unfold the header
-    header = re.sub(r'\r?\n\s+', ' ', header)
-
-    # different naming between python 2.4 and 2.6?
-    if hasattr(email, 'header'):
-        header = email.header.decode_header(header)
-    else:
-        header = email.Header.decode_header(header)
-
-    headerout = []
-    for line in header:
-        if line[1]:
-            line = line[0].decode(line[1])
-        else:
-            line = line[0]
-        headerout.append(line)
-    return '\n'.join(headerout)

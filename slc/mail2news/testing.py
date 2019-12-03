@@ -1,3 +1,4 @@
+import email
 import os
 from contextlib import contextmanager
 from plone.app.testing import FunctionalTesting
@@ -8,18 +9,22 @@ from plone.app.testing import applyProfile
 
 
 @contextmanager
-def open_mailfile(tmpl_file):
+def open_mailfile(filename):
     testfolder = os.path.join(os.path.split(__file__)[0], "tests")
-    path = os.path.join(testfolder, tmpl_file)
+    path = os.path.join(testfolder, filename)
     fd = open(path)
     yield fd
     fd.close()
 
 
-def load_mail(tmpl_file):
-    with open_mailfile(tmpl_file) as fd:
-        mail = fd.read()
-    return mail
+def load_mail_str(filename):
+    with open_mailfile(filename) as fd:
+        return fd.read()
+
+
+def load_mail_msg(filename):
+    with open_mailfile(filename) as fd:
+        return email.message_from_file(fd)
 
 
 class SlcMail2news(PloneSandboxLayer):
