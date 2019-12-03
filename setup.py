@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = "1.0.5.dev0"
+version = "2.0.0"
 
 setup(
     name="slc.mail2news",
@@ -10,14 +10,17 @@ setup(
     long_description=open("README.md").read()
     + "\n"
     + open(os.path.join("docs", "HISTORY.txt")).read(),
+    long_description_content_type="text/markdown",
     # Get more strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
+        "Development Status :: 5 - Production/Stable",
         "Framework :: Plone",
+        "Framework :: Plone :: 4.3",
+        "Framework :: Plone :: 5.2",
+        "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.7",
-        "Framework :: Plone :: 4.3",
-        "Framework :: Plone :: 5.2",
     ],
     keywords="mail news rpc",
     author="Syslab.com",
@@ -33,7 +36,7 @@ setup(
         # -*- Extra requirements: -*-
         "slc.zopescript",
     ],
-    extras_require={"test": ["plone.app.testing", "plone.api",],},
+    extras_require={"test": ["plone.app.testing", "plone.api"]},
     entry_points="""
       # -*- Entry points: -*-
 
