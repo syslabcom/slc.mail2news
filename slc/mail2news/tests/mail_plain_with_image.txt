@@ -1,0 +1,41 @@
+From reinhardt@syslab.com Fri Nov 29 14:53:46 2019
+Delivery-date: Fri, 29 Nov 2019 14:53:46 +0100
+Return-path: <reinhardt@syslab.com>
+X-Envelope-to: reinhardt@syslab.com
+Date: Fri, 29 Nov 2019 14:53:44 +0100
+From: Manuel Reinhardt <reinhardt@syslab.com>
+To: reinhardt@syslab.com
+Subject: Mail Upload Test Plain With Image
+Message-ID: <20191129135344.GA31354@joy>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="PEIAKu/WMn1b1Hv9"
+Content-Disposition: inline
+User-Agent: Mutt/1.12.2 (2019-09-21)
+X-Df-Sender: cmVpbmhhcmR0QHN5c2xhYi5jb20=
+X-Received-SPF: none ( mx06.ispgateway.de: domain of syslab.com does not provide an SPF record )
+Status: RO
+Content-Length: 550
+Lines: 21
+
+
+--PEIAKu/WMn1b1Hv9
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+
+This is a test with an image attached.
+-- 
+https://www.syslab.com/
+https://line34.neon-cathedral.net/
+https://github.com/reinhardt/
+
+--PEIAKu/WMn1b1Hv9
+Content-Type: image/png
+Content-Disposition: attachment; filename="pixel.png"
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAAXNSR0IArs4c6QAAAAlwSFlz
+AAALEwAACxMBAJqcGAAAAAd0SU1FB9wCCAwNFLAyXi8AAAAPSURBVAgdAQQA+/8AAAAAAAQA
+AS9StI0AAAAASUVORK5CYII=
+
+--PEIAKu/WMn1b1Hv9--
+
