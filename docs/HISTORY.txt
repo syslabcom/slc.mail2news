@@ -1,9 +1,10 @@
 Changelog
 =========
 
-1.0.5 (unreleased)
+2.0.0 (2019-12-03)
 ------------------
 
+- Python 3 support [reinhardt]
 - Fix text cropping (Refs. #UNIBW-907)  [ale-rt]
 - Add first attached image as lead image [reinhardt]
 - Wrap mail body lines after 50 characters [reinhardt]

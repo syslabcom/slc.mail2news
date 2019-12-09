@@ -1,3 +1,6 @@
 graft src/slc
 recursive-include docs *
 include *.cfg *.rst *.in
+include *.txt
+recursive-include slc *.txt
+recursive-include slc *.zcml

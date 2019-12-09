@@ -1,6 +1,7 @@
 From: news@example.com
 To: plone@example.com
 X-Original-To: plone@example.com
+X-Mailin-Ignore: true
 Message-ID: <2CCD84BF-AFFD-4B17-A594-330B3A3CD8E2@example.com>
 Subject: Mail Upload Test Plain
 Content-Type: multipart/mixed;
@@ -11,7 +12,7 @@ This is a multi-part message in MIME format.
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 
-Test *31*
+Test, please ignore
 
 _bla bla_
 
