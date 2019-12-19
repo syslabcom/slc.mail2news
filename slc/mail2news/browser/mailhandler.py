@@ -1,6 +1,7 @@
 import email
 import logging
 import re
+import six
 from datetime import date
 
 import zope.event
@@ -71,8 +72,12 @@ class MailHandler(BrowserView):
         """
         pw = self.context.portal_workflow
 
-        msg = safe_unicode(mailstring)
-        msg = email.message_from_string(msg)
+        if six.PY3 and isinstance(mailstring, bytes):
+            parser = email.parser.BytesFeedParser()
+        else:
+            parser = email.parser.FeedParser()
+        parser.feed(mailstring)
+        msg = parser.close()
 
         # FLOW-555
         ignore = msg.get("x-mailin-ignore", "false")
@@ -192,7 +197,7 @@ def unpackMail(msg):
 
         # Get plain text
         if part.get_content_type() == "text/plain" and not name and not textBody:
-            textBody = safe_unicode(payload)
+            textBody = safe_unicode(payload, encoding=part.get_content_charset())
             # Return ContentType only for the plain-body of a mail
             contentType = part.get_content_type()
         else:
@@ -201,7 +206,7 @@ def unpackMail(msg):
             # No name? This should be the html-body...
             if not name:
                 name = "%s.%s" % (maintype, subtype)
-                htmlBody = safe_unicode(payload)
+                htmlBody = safe_unicode(payload, encoding=part.get_content_charset())
 
             attachments.append(
                 {

@@ -34,6 +34,7 @@ setup(
     install_requires=[
         "setuptools",
         # -*- Extra requirements: -*-
+        "six",
         "slc.zopescript",
     ],
     extras_require={"test": ["plone.app.testing", "plone.api"]},
