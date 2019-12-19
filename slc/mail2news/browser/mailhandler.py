@@ -207,10 +207,11 @@ def unpackMail(msg):
 
         name = part.get_filename()
         payload = part.get_payload(decode=1)
+        part_encoding = part.get_content_charset() or "utf-8"
 
         # Get plain text
         if part.get_content_type() == "text/plain" and not name and not textBody:
-            textBody = safe_unicode(payload, encoding=part.get_content_charset())
+            textBody = safe_unicode(payload, encoding=part_encoding)
             # Return ContentType only for the plain-body of a mail
             contentType = part.get_content_type()
         else:
@@ -219,7 +220,7 @@ def unpackMail(msg):
             # No name? This should be the html-body...
             if not name:
                 name = "%s.%s" % (maintype, subtype)
-                htmlBody = safe_unicode(payload, encoding=part.get_content_charset())
+                htmlBody = safe_unicode(payload, encoding=part_encoding)
 
             attachments.append(
                 {
