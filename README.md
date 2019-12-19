@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/syslabcom/slc.mail2news.svg?branch=master)](https://travis-ci.org/syslabcom/slc.mail2news)
+
 Introduction
 ============
 
