@@ -93,7 +93,20 @@ class MailHandler(BrowserView):
 
         # let's create the news item
 
-        subject = msg.get("subject", "No Subject")
+        raw_subject = msg.get("subject", "No Subject")
+        subject_parts = email.header.decode_header(raw_subject)
+        if six.PY3:
+            separator = ""
+        else:
+            # Bit weird: on python 2, spaces between the parts seem to vanish
+            separator = " "
+        subject = separator.join(
+            [
+                safe_unicode(subject_part, encoding=subject_charset or "utf-8")
+                for subject_part, subject_charset in subject_parts
+            ]
+        )
+
         sender = msg.get("from", "No From")
         title = "%s" % (subject)
 
@@ -119,7 +132,7 @@ class MailHandler(BrowserView):
             uni_aktuell_body = RichTextValue(uni_aktuell_body)
 
         objid = self.context.invokeFactory(
-            "News Item", id=id, title=title, text=uni_aktuell_body, description=desc,
+            "News Item", id=id, title=title, text=uni_aktuell_body, description=desc
         )
 
         mailObject = getattr(self.context, objid)
@@ -130,7 +143,7 @@ class MailHandler(BrowserView):
             image = images[0]
             if hasattr(mailObject, "image"):
                 mailObject.image = NamedBlobImage(
-                    filename=safe_unicode(image["filename"]), data=image["filebody"],
+                    filename=safe_unicode(image["filename"]), data=image["filebody"]
                 )
             elif hasattr(mailObject, "setImage"):
                 mailObject.setImage(image["filebody"], filename=image["filename"])
