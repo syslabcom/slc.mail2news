@@ -66,6 +66,21 @@ class MailHandler(BrowserView):
             log.info(msg)
             return msg
 
+    def decode_header(self, header_value):
+        header_parts = email.header.decode_header(header_value)
+        if six.PY3:
+            separator = ""
+        else:
+            # Bit weird: on python 2, spaces between the parts seem to vanish
+            separator = " "
+        header_decoded = separator.join(
+            [
+                safe_unicode(header_part, encoding=header_charset or "utf-8")
+                for header_part, header_charset in header_parts
+            ]
+        )
+        return header_decoded
+
     def addMail(self, mailstring):
         """ Store mail as news item
             Returns created item
@@ -93,21 +108,8 @@ class MailHandler(BrowserView):
 
         # let's create the news item
 
-        raw_subject = msg.get("subject", "No Subject")
-        subject_parts = email.header.decode_header(raw_subject)
-        if six.PY3:
-            separator = ""
-        else:
-            # Bit weird: on python 2, spaces between the parts seem to vanish
-            separator = " "
-        subject = separator.join(
-            [
-                safe_unicode(subject_part, encoding=subject_charset or "utf-8")
-                for subject_part, subject_charset in subject_parts
-            ]
-        )
-
-        sender = msg.get("from", "No From")
+        subject = self.decode_header(msg.get("subject", "No Subject"))
+        sender = self.decode_header(msg.get("from", "No From"))
         title = "%s" % (subject)
 
         new_id = IUserPreferredURLNormalizer(self.request).normalize(title)

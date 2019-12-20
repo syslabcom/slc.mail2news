@@ -141,6 +141,24 @@ class TestMailHandler(unittest.TestCase):
         self.assertIn("zufälligen Umständen", text.replace("\n", " "))
         self.assertNotIn("Message-ID:", text)
 
+    def test_mail_handler_sender_utf8(self):
+        mail = load_mail_str("mail_sender_utf8.txt")
+
+        request = self.request.clone()
+        request["Mail"] = mail
+        helpers.login(self.layer["app"], SITE_OWNER_NAME)
+        view = api.content.get_view(
+            context=self.portal, request=request, name="mail_handler"
+        )
+        msg = view()
+        self.assertIn("Created news item ", msg)
+        path = msg.replace("Created news item http://nohost", "")
+        obj = self.portal.unrestrictedTraverse(path)
+
+        text = self.get_text(obj)
+        self.assertIn("Kersaß Leiff", text)
+        self.assertNotIn("Message-ID:", text)
+
 
 class TestMailHandlerUnit(unittest.TestCase):
     def test_unpack_message_plain(self):
