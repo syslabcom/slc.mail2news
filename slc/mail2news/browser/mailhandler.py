@@ -206,7 +206,8 @@ def unpackMail(msg):
             continue
 
         name = part.get_filename()
-        payload = part.get_payload(decode=1)
+        decode = part.get("Content-Transfer-Encoding") in ["quoted-printable", "base64"]
+        payload = part.get_payload(decode=decode)
         part_encoding = part.get_content_charset() or "utf-8"
 
         # Get plain text
