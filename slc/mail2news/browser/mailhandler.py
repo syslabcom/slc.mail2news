@@ -108,9 +108,11 @@ class MailHandler(BrowserView):
 
         # let's create the news item
 
-        subject = self.decode_header(msg.get("subject", "No Subject"))
         sender = self.decode_header(msg.get("from", "No From"))
-        title = "%s" % (subject)
+        subject = self.decode_header(msg.get("subject", "No Subject"))
+        # SCR-72, remove everything in the subject after the last "] "
+        stripped_subject = subject.split('] ')[-1]
+        title = "%s" % (stripped_subject)
 
         new_id = IUserPreferredURLNormalizer(self.request).normalize(title)
         id = self._findUniqueId(new_id)
@@ -124,7 +126,7 @@ class MailHandler(BrowserView):
         plone_view = api.content.get_view(
             context=self.context, request=self.request, name="plone"
         )
-        desc = plone_view.cropText(body, 60)
+        desc = plone_view.cropText(body, 180)
         body = "\n".join([wrap_line(line) for line in body.splitlines()])
         uni_aktuell_body = (
             "<p><strong>%s: %s</strong></p> "
