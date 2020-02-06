@@ -155,6 +155,11 @@ class MailHandler(BrowserView):
             pw.doActionFor(mailObject, "publish")
         except Exception as e:
             log.exception(e)
+
+        created = mailObject.created()
+        mailObject.setEffectiveDate(created)
+        mailObject.setExpirationDate(created + 30)
+
         return mailObject
 
     def _findUniqueId(self, id):
