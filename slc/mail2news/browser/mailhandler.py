@@ -81,6 +81,12 @@ class MailHandler(BrowserView):
         )
         return header_decoded
 
+    def HtmlToText(self, text):
+        pt = api.portal.get_tool("portal_transforms")
+        plain = pt.convertToData("text/plain", text)
+        data = " ".join(plain.strip().split())
+        return data
+
     def addMail(self, mailstring):
         """ Store mail as news item
             Returns created item
