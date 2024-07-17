@@ -1,17 +1,18 @@
 Changelog
 =========
 
-Unreleased
-----------
-
-- Tweak the title and description #SCR-72 [cillianderoiste]
-- Set expiration and effective dates. #FLOW-966 [reinhardt]
-
 
 2.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add HtmlToText method #2428 [reinhardt]
+
+
+2.0.1 (2020-11-09)
+------------------
+
+- Tweak the title and description #SCR-72 [cillianderoiste]
+- Set expiration and effective dates. #FLOW-966 [reinhardt]
 
 
 2.0.0 (2019-12-03)
