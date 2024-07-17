@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-2.0.2 (unreleased)
+2.0.2 (2024-07-17)
 ------------------
 
 - Add HtmlToText method #2428 [reinhardt]
